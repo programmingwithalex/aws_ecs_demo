@@ -1,0 +1,22 @@
+version: '3.1'
+
+services:
+  aws-ecs-demo:
+    build:
+      context: ./
+      dockerfile: ./Dockerfile
+      args:
+        - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+        - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+        - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}
+        - FLASK_SECRET_KEY=${FLASK_SECRET_KEY}
+    container_name: aws-ecs-demo
+    ports:
+      - 5000:5000
+    environment:
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}
+      - FLASK_SECRET_KEY=${FLASK_SECRET_KEY}
+    # bridge - connect to docker container from localhost
+    network_mode: bridge
