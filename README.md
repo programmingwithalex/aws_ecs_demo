@@ -1,6 +1,6 @@
 # aws_ecs_demo
 
-Copyright (c) 2021, programmingwithalex
+Copyright (c) 2021, [programmingwithalex](https://github.com/programmingwithalex)
 
 ## Description
 
