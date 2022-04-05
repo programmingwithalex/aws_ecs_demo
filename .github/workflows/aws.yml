@@ -35,6 +35,11 @@ jobs:
   deploy:
     name: Deploy
     runs-on: ubuntu-latest
+    env:
+      AWS_DEFAULT_REGION: us-east-1
+      AWS_ECR_REPOSITORY_NAME: aws-ecs-demo-ecr
+      AWS_ECS_SERVICE_NAME: aws-ecs-demo-service
+      AWS_ECS_CLUSTER_NAME: aws-ecs-demo-cluster
 
     steps:
     - name: Checkout
@@ -45,32 +50,29 @@ jobs:
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
+        aws-region: ${{ env.AWS_DEFAULT_REGION }}
 
     - name: Login to Amazon ECR
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v1
 
     - name: Build, tag, and push image to Amazon ECR
-      id: build-image
-      env:
-        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        ECR_REPOSITORY: aws-ecs-demo-ecr
-        IMAGE_TAG: ${{ github.sha }}
-      run: |
-        # Build a docker container and
-        # push it to ECR so that it can
-        # be deployed to ECS.
-        docker build --build-arg AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}" \
-            --build-arg AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" \
-            --build-arg AWS_DEFAULT_REGION="${{ secrets.AWS_DEFAULT_REGION }}" \
-            --build-arg FLASK_SECRET_KEY="${{ secrets.FLASK_SECRET_KEY }}" \
-            -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-        echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+      id: build-deploy-image
+      uses: whoan/docker-build-with-cache-action@v5
+      with:
+        username: "${{ secrets.AWS_ACCESS_KEY_ID }}"
+        password: "${{ secrets.AWS_SECRET_ACCESS_KEY }}"
+        registry: ${{ steps.login-ecr.outputs.registry }}
+        image_name: ${{ env.AWS_ECR_REPOSITORY_NAME }}
+        build_extra_args: >-
+          --build-arg AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
+          --build-arg AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          --build-arg AWS_DEFAULT_REGION=${{ env.AWS_DEFAULT_REGION }}
+          --build-arg FLASK_SECRET_KEY=${{ env.FLASK_SECRET_KEY }}
+        push_image_and_stages: true
 
     - name: Fill in the new image ID in the Amazon ECS task definition
-      id: task-def
+      id: task-definition
       uses: aws-actions/amazon-ecs-render-task-definition@v1
       with:
         task-definition: aws-task-definition.json
@@ -81,6 +83,6 @@ jobs:
       uses: aws-actions/amazon-ecs-deploy-task-definition@v1
       with:
         task-definition: ${{ steps.task-def.outputs.task-definition }}
-        service: aws-ecs-demo-service
-        cluster: aws-ecs-demo-cluster
+        service: ${{ env.AWS_ECS_SERVICE_NAME }}
+        cluster: ${{ env.AWS_ECS_CLUSTER_NAME }}
         wait-for-service-stability: true
