@@ -4,7 +4,7 @@ Copyright (c) 2021, [programmingwithalex](https://github.com/programmingwithalex
 
 ## Description
 
-This repo serves as a reference for the [Youtube playlist](https://www.youtube.com/watch?v=kqa_cchAMLY&list=PL0dOL8Z7pG3IWsvseNd-JoFTHL16P_iTC&index=1).
+This repo serves as a reference for the [Youtube playlist](https://www.youtube.com/watch?v=a1nnZDps_yM&list=PLbn3jWIXv_iZ566tBk_DTIPGY4fUW4qBn&index=1).
 
 The repo covers pushing a boiler-plate Flask app to AWS ECS with the following topics covered:
 
